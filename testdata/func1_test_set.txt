@@ -1,0 +1,3 @@
+mode: set
+{{.PkgPath}}/testdata/func1.go:4.23,5.16 1 1
+{{.PkgPath}}/testdata/func1.go:5.16,7.3 1 0

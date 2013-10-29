@@ -50,6 +50,7 @@ func TestConvertFunc1SetMode(t *testing.T) {
 			t.Error("Can't execute template.")
 			panic("tmpl.Execute failed")
 		}
+		pipe1wr.Close()
 	}()
 
 	pipe2rd, pipe2wr := io.Pipe()

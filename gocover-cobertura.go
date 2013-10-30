@@ -50,12 +50,13 @@ func convert(in io.Reader, out io.Writer) {
 func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	cov.Packages = []Package{}
 	for _, profile := range profiles {
-		cov.parseFile(profile.FileName)
+		cov.parseProfile(profile)
 	}
 	return nil
 }
 
-func (cov *Coverage) parseFile(fileName string) error {
+func (cov *Coverage) parseProfile(profile *Profile) error {
+	fileName := profile.FileName
 	absFilePath, err := findFile(fileName)
 	if err != nil {
 		return err
@@ -90,6 +91,7 @@ func (cov *Coverage) parseFile(fileName string) error {
 		classes:  make(map[string]*Class),
 		pkg:      pkg,
 		data:     data,
+		profile:  profile,
 	}
 	ast.Walk(visitor, visitor.astFile)
 	for _, c := range visitor.classes {
@@ -107,6 +109,7 @@ type fileVisitor struct {
 	classes  map[string]*Class
 	pkg      *Package
 	data     []byte
+	profile  *Profile
 }
 
 func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
@@ -125,6 +128,27 @@ func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
 func (v *fileVisitor) method(n *ast.FuncDecl) *Method {
 	method := &Method{Name: n.Name.Name}
 	method.Lines = []Line{}
+
+	start := v.fset.Position(n.Pos())
+	end := v.fset.Position(n.End())
+	startLine := start.Line
+	startCol := start.Column
+	endLine := end.Line
+	endCol := end.Column
+	// The blocks are sorted, so we can stop counting as soon as we reach the end of the relevant block.
+	for _, b := range v.profile.Blocks {
+		if b.StartLine > endLine || (b.StartLine == endLine && b.StartCol >= endCol) {
+			// Past the end of the function.
+			break
+		}
+		if b.EndLine < startLine || (b.EndLine == startLine && b.EndCol <= startCol) {
+			// Before the beginning of the function
+			continue
+		}
+		for i := b.StartLine; i <= b.EndLine; i++ {
+			method.Lines = append(method.Lines, Line{Number: i, Hits: int64(b.Count)})
+		}
+	}
 	return method
 }
 

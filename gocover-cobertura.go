@@ -82,6 +82,7 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 	}
 	if pkg == nil {
 		pkg = &Package{Name: pkgPath, Classes: []*Class{}}
+		cov.Packages = append(cov.Packages, pkg)
 	}
 	visitor := &fileVisitor{
 		fset:     fset,
@@ -90,13 +91,10 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 		coverage: cov,
 		classes:  make(map[string]*Class),
 		data:     data,
+		pkg:      pkg,
 		profile:  profile,
 	}
 	ast.Walk(visitor, visitor.astFile)
-	for _, c := range visitor.classes {
-		pkg.Classes = append(pkg.Classes, c)
-	}
-	cov.Packages = append(cov.Packages, pkg)
 	return nil
 }
 
@@ -107,6 +105,7 @@ type fileVisitor struct {
 	coverage *Coverage
 	classes  map[string]*Class
 	data     []byte
+	pkg      *Package
 	profile  *Profile
 }
 
@@ -156,6 +155,7 @@ func (v *fileVisitor) class(n *ast.FuncDecl) *Class {
 	if class == nil {
 		class = &Class{Name: className, Filename: v.name, Methods: []*Method{}, Lines: []*Line{}}
 		v.classes[className] = class
+		v.pkg.Classes = append(v.pkg.Classes, class)
 	}
 	return class
 }

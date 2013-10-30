@@ -145,8 +145,8 @@ func TestConvertSetMode(t *testing.T) {
 	if c.Name != "Type1" {
 		t.Error()
 	}
-	if c.Filename != dirInfo.PkgPath+"/testdata/func1.go" {
-		t.Errorf("Expected %s but %s", dirInfo.PkgPath+"/testdata/func1.go", c.Filename)
+	if c.Filename != dirInfo.PkgPath+"/testdata/func2.go" {
+		t.Errorf("Expected %s but %s", dirInfo.PkgPath+"/testdata/func2.go", c.Filename)
 	}
 	if c.Methods == nil || len(c.Methods) != 3 {
 		t.Fatal()

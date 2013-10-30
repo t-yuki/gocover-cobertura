@@ -81,7 +81,6 @@ func (cov *Coverage) parseFile(fileName string) error {
 	}
 	if pkg == nil {
 		pkg = &Package{Name: pkgPath, Classes: []Class{}}
-		cov.Packages = append(cov.Packages, *pkg)
 	}
 	visitor := &fileVisitor{
 		fset:     fset,
@@ -93,6 +92,10 @@ func (cov *Coverage) parseFile(fileName string) error {
 		data:     data,
 	}
 	ast.Walk(visitor, visitor.astFile)
+	for _, c := range visitor.classes {
+		pkg.Classes = append(pkg.Classes, *c)
+	}
+	cov.Packages = append(cov.Packages, *pkg)
 	return nil
 }
 
@@ -115,7 +118,6 @@ func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
 		for _, line := range method.Lines {
 			class.Lines = append(class.Lines, line)
 		}
-		v.pkg.Classes = append(v.pkg.Classes, *class)
 	}
 	return v
 }
@@ -143,7 +145,8 @@ func (v *fileVisitor) recvName(n *ast.FuncDecl) string {
 	recv := n.Recv.List[0].Type
 	start := v.fset.Position(recv.Pos())
 	end := v.fset.Position(recv.End())
-	return string(v.data[start.Offset:end.Offset])
+	name := string(v.data[start.Offset:end.Offset])
+	return strings.TrimSpace(strings.TrimLeft(name, "*"))
 }
 
 func stripKnownSources(sources []Source, fileName string) string {

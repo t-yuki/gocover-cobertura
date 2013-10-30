@@ -85,7 +85,7 @@ func TestConvertFunc1SetMode(t *testing.T) {
 	if p.Name != dirInfo.PkgPath+"/testdata" {
 		t.Fatal()
 	}
-	if p.Classes == nil || len(p.Classes) != 1 {
+	if p.Classes == nil || len(p.Classes) != 2 {
 		t.Fatal()
 	}
 
@@ -138,5 +138,16 @@ func TestConvertFunc1SetMode(t *testing.T) {
 	l2 = c.Lines[1]
 	if l2.Number != 6 {
 		t.Error()
+	}
+
+	c = p.Classes[1]
+	if c.Name != "Type1" {
+		t.Error()
+	}
+	if c.Filename != dirInfo.PkgPath+"/testdata/func1.go" {
+		t.Errorf("Expected %s but %s", dirInfo.PkgPath+"/testdata/func1.go", c.Filename)
+	}
+	if c.Methods == nil || len(c.Methods) != 3 {
+		t.Fatal()
 	}
 }

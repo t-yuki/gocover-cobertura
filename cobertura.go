@@ -48,4 +48,3 @@ type Line struct {
 	Number int   `xml:"number,attr"`
 	Hits   int64 `xml:"hits,attr"`
 }
-

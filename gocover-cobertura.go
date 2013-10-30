@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -49,35 +50,37 @@ func convert(in io.Reader, out io.Writer) {
 func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	cov.Packages = []Package{}
 	for _, profile := range profiles {
-		fn := profile.FileName
-		file, err := findFile(fn)
-		if err != nil {
-			return err
-		}
-		cov.parseFile(file)
+		cov.parseFile(profile.FileName)
 	}
 	return nil
 }
 
 func (cov *Coverage) parseFile(fileName string) error {
-	fset := token.NewFileSet()
-	parsed, err := parser.ParseFile(fset, fileName, nil, 0)
+	absFilePath, err := findFile(fileName)
 	if err != nil {
 		return err
 	}
-	data, err := ioutil.ReadFile(fileName)
+	fset := token.NewFileSet()
+	parsed, err := parser.ParseFile(fset, absFilePath, nil, 0)
+	if err != nil {
+		return err
+	}
+	data, err := ioutil.ReadFile(absFilePath)
 	if err != nil {
 		return err
 	}
 
+	pkgPath, _ := filepath.Split(fileName)
+	pkgPath = strings.TrimRight(pkgPath, string(os.PathSeparator))
+
 	var pkg *Package
 	for _, p := range cov.Packages {
-		if p.Name == fileName {
+		if p.Name == pkgPath {
 			pkg = &p
 		}
 	}
 	if pkg == nil {
-		pkg = &Package{Name: fileName, Classes: []Class{}}
+		pkg = &Package{Name: pkgPath, Classes: []Class{}}
 		cov.Packages = append(cov.Packages, *pkg)
 	}
 	visitor := &fileVisitor{

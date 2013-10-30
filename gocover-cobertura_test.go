@@ -86,7 +86,7 @@ func TestConvertFunc1SetMode(t *testing.T) {
 		t.Fatal()
 	}
 	if p.Classes == nil || len(p.Classes) != 1 {
-		t.Error()
+		t.Fatal()
 	}
 
 	c := p.Classes[0]
@@ -97,10 +97,10 @@ func TestConvertFunc1SetMode(t *testing.T) {
 		t.Errorf("Expected %s but %s", dirInfo.PkgPath+"/testdata/func1.go", c.Filename)
 	}
 	if c.Methods == nil || len(c.Methods) != 1 {
-		t.Error()
+		t.Fatal()
 	}
 	if c.Lines == nil || len(c.Lines) != 2 {
-		t.Error()
+		t.Fatal()
 	}
 
 	m := c.Methods[0]

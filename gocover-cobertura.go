@@ -170,14 +170,3 @@ func (v *fileVisitor) recvName(n *ast.FuncDecl) string {
 	name := string(v.data[start.Offset:end.Offset])
 	return strings.TrimSpace(strings.TrimLeft(name, "*"))
 }
-
-func stripKnownSources(sources []*Source, fileName string) string {
-	for _, source := range sources {
-		prefix := source.Path
-		prefix = strings.TrimSuffix(prefix, string(os.PathSeparator)) + string(os.PathSeparator)
-		if strings.HasPrefix(fileName, prefix) {
-			return strings.TrimPrefix(fileName, prefix)
-		}
-	}
-	return fileName
-}

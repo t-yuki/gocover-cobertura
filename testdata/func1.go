@@ -15,3 +15,6 @@ func (r Type1) Func2(arg1 *int) {
 
 func (r *Type1) Func3(arg1 *int) {
 }
+
+func (r  * Type1 ) Func4(arg1 *int) {
+}

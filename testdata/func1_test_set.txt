@@ -1,6 +1,0 @@
-mode: set
-{{.PkgPath}}/testdata/func1.go:4.23,5.16 1 1
-{{.PkgPath}}/testdata/func1.go:5.16,7.3 1 0
-{{.PkgPath}}/testdata/func1.go:13.33,14.2 0 0
-{{.PkgPath}}/testdata/func1.go:16.34,17.2 0 0
-{{.PkgPath}}/testdata/func1.go:19.37,20.2 0 0

@@ -35,8 +35,8 @@ func TestConvertEmpty(t *testing.T) {
 	}
 }
 
-func TestConvertFunc1SetMode(t *testing.T) {
-	tmpl, err := template.ParseFiles("testdata/func1_test_set.txt")
+func TestConvertSetMode(t *testing.T) {
+	tmpl, err := template.ParseFiles("testdata/testdata_set.txt")
 	if err != nil {
 		t.Fatal("Can't parse testdata.")
 	}
@@ -99,7 +99,7 @@ func TestConvertFunc1SetMode(t *testing.T) {
 	if c.Methods == nil || len(c.Methods) != 1 {
 		t.Fatal()
 	}
-	if c.Lines == nil || len(c.Lines) != 2 {
+	if c.Lines == nil || len(c.Lines) != 5 { // Why 5 lines? hmm...
 		t.Fatal()
 	}
 
@@ -107,37 +107,38 @@ func TestConvertFunc1SetMode(t *testing.T) {
 	if m.Name != "Func1" {
 		t.Error()
 	}
-	if m.Lines == nil || len(m.Lines) != 2 {
+	if m.Lines == nil || len(m.Lines) != 5 {
 		t.Fatal()
 	}
 
-	l1 := m.Lines[0]
-	if l1.Number != 5 {
-		t.Error()
+	var l Line
+	if l = m.Lines[0]; l.Number != 4 || l.Hits != 1 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l1.Hits != 1 {
-		t.Error()
+	if l = m.Lines[1]; l.Number != 5 || l.Hits != 1 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-
-	l2 := m.Lines[1]
-	if l2.Number != 6 {
-		t.Error()
+	if l = m.Lines[2]; l.Number != 5 || l.Hits != 0 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l2.Hits != 0 {
-		t.Error()
+	if l = m.Lines[3]; l.Number != 6 || l.Hits != 0 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-
-	l1 = c.Lines[0]
-	if l1.Number != 5 {
-		t.Error()
-	}
-	if l1.Hits != 1 {
-		t.Error()
+	if l = m.Lines[4]; l.Number != 7 || l.Hits != 0 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
 
-	l2 = c.Lines[1]
-	if l2.Number != 6 {
-		t.Error()
+	if l = c.Lines[0]; l.Number != 4 || l.Hits != 1 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
+	}
+	if l = c.Lines[1]; l.Number != 5 || l.Hits != 1 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
+	}
+	if l = c.Lines[2]; l.Number != 5 || l.Hits != 0 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
+	}
+	if l = c.Lines[3]; l.Number != 6 || l.Hits != 0 {
+		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
 
 	c = p.Classes[1]

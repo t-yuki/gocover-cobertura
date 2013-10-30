@@ -26,9 +26,9 @@ func convert(in io.Reader, out io.Writer) {
 	}
 
 	srcDirs := build.Default.SrcDirs()
-	sources := make([]Source, len(srcDirs))
+	sources := make([]*Source, len(srcDirs))
 	for i, dir := range srcDirs {
-		sources[i] = Source{dir}
+		sources[i] = &Source{dir}
 	}
 
 	coverage := Coverage{Sources: sources, Packages: nil, Timestamp: time.Now().UnixNano() / int64(time.Millisecond)}
@@ -48,7 +48,7 @@ func convert(in io.Reader, out io.Writer) {
 }
 
 func (cov *Coverage) parseProfiles(profiles []*Profile) error {
-	cov.Packages = []Package{}
+	cov.Packages = []*Package{}
 	for _, profile := range profiles {
 		cov.parseProfile(profile)
 	}
@@ -77,11 +77,11 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 	var pkg *Package
 	for _, p := range cov.Packages {
 		if p.Name == pkgPath {
-			pkg = &p
+			pkg = p
 		}
 	}
 	if pkg == nil {
-		pkg = &Package{Name: pkgPath, Classes: []Class{}}
+		pkg = &Package{Name: pkgPath, Classes: []*Class{}}
 	}
 	visitor := &fileVisitor{
 		fset:     fset,
@@ -89,15 +89,14 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 		astFile:  parsed,
 		coverage: cov,
 		classes:  make(map[string]*Class),
-		pkg:      pkg,
 		data:     data,
 		profile:  profile,
 	}
 	ast.Walk(visitor, visitor.astFile)
 	for _, c := range visitor.classes {
-		pkg.Classes = append(pkg.Classes, *c)
+		pkg.Classes = append(pkg.Classes, c)
 	}
-	cov.Packages = append(cov.Packages, *pkg)
+	cov.Packages = append(cov.Packages, pkg)
 	return nil
 }
 
@@ -107,7 +106,6 @@ type fileVisitor struct {
 	astFile  *ast.File
 	coverage *Coverage
 	classes  map[string]*Class
-	pkg      *Package
 	data     []byte
 	profile  *Profile
 }
@@ -117,7 +115,7 @@ func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
 	case *ast.FuncDecl:
 		class := v.class(n)
 		method := v.method(n)
-		class.Methods = append(class.Methods, *method)
+		class.Methods = append(class.Methods, method)
 		for _, line := range method.Lines {
 			class.Lines = append(class.Lines, line)
 		}
@@ -127,7 +125,7 @@ func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
 
 func (v *fileVisitor) method(n *ast.FuncDecl) *Method {
 	method := &Method{Name: n.Name.Name}
-	method.Lines = []Line{}
+	method.Lines = []*Line{}
 
 	start := v.fset.Position(n.Pos())
 	end := v.fset.Position(n.End())
@@ -146,7 +144,7 @@ func (v *fileVisitor) method(n *ast.FuncDecl) *Method {
 			continue
 		}
 		for i := b.StartLine; i <= b.EndLine; i++ {
-			method.Lines = append(method.Lines, Line{Number: i, Hits: int64(b.Count)})
+			method.Lines = append(method.Lines, &Line{Number: i, Hits: int64(b.Count)})
 		}
 	}
 	return method
@@ -156,7 +154,7 @@ func (v *fileVisitor) class(n *ast.FuncDecl) *Class {
 	className := v.recvName(n)
 	var class *Class = v.classes[className]
 	if class == nil {
-		class = &Class{Name: className, Filename: v.name, Methods: []Method{}, Lines: []Line{}}
+		class = &Class{Name: className, Filename: v.name, Methods: []*Method{}, Lines: []*Line{}}
 		v.classes[className] = class
 	}
 	return class
@@ -173,7 +171,7 @@ func (v *fileVisitor) recvName(n *ast.FuncDecl) string {
 	return strings.TrimSpace(strings.TrimLeft(name, "*"))
 }
 
-func stripKnownSources(sources []Source, fileName string) string {
+func stripKnownSources(sources []*Source, fileName string) string {
 	for _, source := range sources {
 		prefix := source.Path
 		prefix = strings.TrimSuffix(prefix, string(os.PathSeparator)) + string(os.PathSeparator)

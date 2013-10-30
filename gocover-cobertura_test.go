@@ -56,7 +56,7 @@ func TestConvertSetMode(t *testing.T) {
 	pipe2rd, pipe2wr := io.Pipe()
 
 	var convwr io.Writer = pipe2wr
-	testwr, err := os.Create("testdata/func1_test_set.xml")
+	testwr, err := os.Create("testdata/testdata_set.xml")
 	if err == nil {
 		convwr = io.MultiWriter(convwr, testwr)
 	} else {
@@ -111,7 +111,7 @@ func TestConvertSetMode(t *testing.T) {
 		t.Fatal()
 	}
 
-	var l Line
+	var l *Line
 	if l = m.Lines[0]; l.Number != 4 || l.Hits != 1 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}

@@ -86,26 +86,22 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 	}
 	visitor := &fileVisitor{
 		fset:     fset,
-		name:     fileName,
-		astFile:  parsed,
-		coverage: cov,
+		fileName: fileName,
+		fileData: data,
 		classes:  make(map[string]*Class),
-		data:     data,
 		pkg:      pkg,
 		profile:  profile,
 	}
-	ast.Walk(visitor, visitor.astFile)
+	ast.Walk(visitor, parsed)
 	return nil
 }
 
 type fileVisitor struct {
 	fset     *token.FileSet
-	name     string
-	astFile  *ast.File
-	coverage *Coverage
-	classes  map[string]*Class
-	data     []byte
+	fileName string
+	fileData []byte
 	pkg      *Package
+	classes  map[string]*Class
 	profile  *Profile
 }
 
@@ -153,7 +149,7 @@ func (v *fileVisitor) class(n *ast.FuncDecl) *Class {
 	className := v.recvName(n)
 	var class *Class = v.classes[className]
 	if class == nil {
-		class = &Class{Name: className, Filename: v.name, Methods: []*Method{}, Lines: []*Line{}}
+		class = &Class{Name: className, Filename: v.fileName, Methods: []*Method{}, Lines: []*Line{}}
 		v.classes[className] = class
 		v.pkg.Classes = append(v.pkg.Classes, class)
 	}
@@ -167,6 +163,6 @@ func (v *fileVisitor) recvName(n *ast.FuncDecl) string {
 	recv := n.Recv.List[0].Type
 	start := v.fset.Position(recv.Pos())
 	end := v.fset.Position(recv.End())
-	name := string(v.data[start.Offset:end.Offset])
+	name := string(v.fileData[start.Offset:end.Offset])
 	return strings.TrimSpace(strings.TrimLeft(name, "*"))
 }

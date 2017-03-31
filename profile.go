@@ -12,7 +12,7 @@ import (
 	"go/build"
 	"io"
 	"math"
-	_ "os"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -187,6 +187,12 @@ func (b boundariesByPos) Less(i, j int) bool {
 
 // findFile finds the location of the named file in GOROOT, GOPATH etc.
 func findFile(file string) (string, error) {
+	if strings.HasPrefix(file, "_") {
+		file = file[1:]
+	}
+	if _, err := os.Stat(file); err == nil {
+		return file, nil
+	}
 	dir, file := filepath.Split(file)
 	pkg, err := build.Import(dir, ".", build.FindOnly)
 	if err != nil {

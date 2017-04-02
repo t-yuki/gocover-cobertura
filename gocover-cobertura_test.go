@@ -10,6 +10,8 @@ import (
 	"text/template"
 )
 
+const SaveTestResults = false
+
 type dirInfo struct {
 	PkgPath string
 }
@@ -56,11 +58,13 @@ func TestConvertSetMode(t *testing.T) {
 	pipe2rd, pipe2wr := io.Pipe()
 
 	var convwr io.Writer = pipe2wr
-	testwr, err := os.Create("testdata/testdata_set.xml")
-	if err == nil {
+	if SaveTestResults {
+		testwr, err := os.Create("testdata/testdata_set.xml")
+		if err != nil {
+			t.Fatal("Can't open output testdata.", err)
+		}
+		defer testwr.Close()
 		convwr = io.MultiWriter(convwr, testwr)
-	} else {
-		t.Log("Can't open output testdata. ignoring...")
 	}
 
 	go convert(pipe1rd, convwr)
@@ -82,8 +86,8 @@ func TestConvertSetMode(t *testing.T) {
 	}
 
 	p := v.Packages[0]
-	if p.Name != dirInfo.PkgPath+"/testdata" {
-		t.Fatal()
+	if strings.TrimRight(p.Name, "/") != dirInfo.PkgPath+"/testdata" {
+		t.Fatal(p.Name)
 	}
 	if p.Classes == nil || len(p.Classes) != 2 {
 		t.Fatal()

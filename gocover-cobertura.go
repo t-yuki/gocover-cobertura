@@ -35,7 +35,7 @@ func convert(in io.Reader, out io.Writer) {
 	coverage.parseProfiles(profiles)
 
 	fmt.Fprintf(out, xml.Header)
-	fmt.Fprintf(out, "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-03.dtd\">\n")
+	fmt.Fprintf(out, "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-04.dtd\">\n")
 
 	encoder := xml.NewEncoder(out)
 	encoder.Indent("", "\t")

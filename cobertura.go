@@ -5,13 +5,18 @@ import (
 )
 
 type Coverage struct {
-	XMLName    xml.Name   `xml:"coverage"`
-	LineRate   float32    `xml:"line-rate,attr"`
-	BranchRate float32    `xml:"branch-rate,attr"`
-	Version    string     `xml:"version,attr"`
-	Timestamp  int64      `xml:"timestamp,attr"`
-	Sources    []*Source  `xml:"sources>source"`
-	Packages   []*Package `xml:"packages>package"`
+	XMLName         xml.Name   `xml:"coverage"`
+	LineRate        float32    `xml:"line-rate,attr"`
+	BranchRate      float32    `xml:"branch-rate,attr"`
+	Version         string     `xml:"version,attr"`
+	Timestamp       int64      `xml:"timestamp,attr"`
+	LinesCovered    int64      `xml:"lines-covered,attr"`
+	LinesValid      int64      `xml:"lines-valid,attr"`
+	BranchesCovered int64      `xml:"branches-covered,attr"`
+	BranchesValid   int64      `xml:"branches-valid,attr"`
+	Complexity      float32    `xml:"complexity,attr"`
+	Sources         []*Source  `xml:"sources>source"`
+	Packages        []*Package `xml:"packages>package"`
 }
 
 type Source struct {
@@ -41,6 +46,7 @@ type Method struct {
 	Signature  string  `xml:"signature,attr"`
 	LineRate   float32 `xml:"line-rate,attr"`
 	BranchRate float32 `xml:"branch-rate,attr"`
+	Complexity float32 `xml:"complexity,attr"`
 	Lines      []*Line `xml:"lines>line"`
 }
 

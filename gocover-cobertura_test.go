@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/xml"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -14,6 +16,24 @@ const SaveTestResults = false
 
 type dirInfo struct {
 	PkgPath string
+}
+
+func TestMain(t *testing.T) {
+	fname := filepath.Join(os.TempDir(), "stdout")
+	temp, _ := os.Create(fname)
+	os.Stdout = temp
+	main()
+	outputBytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		t.Fail()
+	}
+	outputString := string(outputBytes)
+	if !strings.Contains(outputString, xml.Header) {
+		t.Fail()
+	}
+	if !strings.Contains(outputString, coberturaDTDDecl) {
+		t.Fail()
+	}
 }
 
 func TestConvertEmpty(t *testing.T) {

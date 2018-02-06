@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/t-yuki/gocover-cobertura.svg?branch=master)](https://travis-ci.org/t-yuki/gocover-cobertura)
+
 go tool cover XML (Cobertura) export
 ====================================
 

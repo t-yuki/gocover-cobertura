@@ -57,6 +57,24 @@ func TestConvertEmpty(t *testing.T) {
 	}
 }
 
+func TestParseProfileDoesntExist(t *testing.T) {
+	v := Coverage{}
+	profile := Profile{FileName: "does-not-exist"}
+	err := v.parseProfile(&profile)
+	if err == nil || !strings.Contains(err.Error(), `can't find "does-not-exist"`) {
+		t.Fatalf("Expected \"can't find\" error; got: %+v", err)
+	}
+}
+
+func TestParseProfileNotReadable(t *testing.T) {
+	v := Coverage{}
+	profile := Profile{FileName: os.DevNull}
+	err := v.parseProfile(&profile)
+	if err == nil || !strings.Contains(err.Error(), `expected 'package', found 'EOF'`) {
+		t.Fatalf("Expected \"expected 'package', found 'EOF'\" error; got: %+v", err)
+	}
+}
+
 func TestConvertSetMode(t *testing.T) {
 	tmpl, err := template.ParseFiles("testdata/testdata_set.txt")
 	if err != nil {

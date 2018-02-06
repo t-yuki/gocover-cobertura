@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+const coberturaDTDDecl = "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-04.dtd\">\n"
+
 func main() {
 	convert(os.Stdin, os.Stdout)
 }
@@ -35,7 +37,7 @@ func convert(in io.Reader, out io.Writer) {
 	coverage.parseProfiles(profiles)
 
 	fmt.Fprintf(out, xml.Header)
-	fmt.Fprintf(out, "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-04.dtd\">\n")
+	fmt.Fprintf(out, coberturaDTDDecl)
 
 	encoder := xml.NewEncoder(out)
 	encoder.Indent("", "\t")

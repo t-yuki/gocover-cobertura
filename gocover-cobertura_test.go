@@ -36,6 +36,33 @@ func TestMain(t *testing.T) {
 	}
 }
 
+func TestConvertParseProfilesError(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil || r != "Can't parse profiles" {
+			t.Errorf("The code did not panic as expected; r = %+v", r)
+		}
+	}()
+
+	pipe2rd, pipe2wr := io.Pipe()
+	defer func() { pipe2rd.Close(); pipe2wr.Close() }()
+	convert(strings.NewReader("invalid data"), pipe2wr)
+}
+
+func TestConvertOutputError(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil || r.(error).Error() != "io: read/write on closed pipe" {
+			t.Errorf("The code did not panic as expected; r = %+v", r)
+		}
+	}()
+
+	pipe2rd, pipe2wr := io.Pipe()
+	pipe2wr.Close()
+	defer func() { pipe2rd.Close() }()
+	convert(strings.NewReader("mode: set"), pipe2wr)
+}
+
 func TestConvertEmpty(t *testing.T) {
 	data := `mode: set`
 
@@ -72,6 +99,18 @@ func TestParseProfileNotReadable(t *testing.T) {
 	err := v.parseProfile(&profile)
 	if err == nil || !strings.Contains(err.Error(), `expected 'package', found 'EOF'`) {
 		t.Fatalf("Expected \"expected 'package', found 'EOF'\" error; got: %+v", err)
+	}
+}
+
+func TestParseProfilePermissionDenied(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "not-readable")
+	defer os.Remove(tmpfile.Name())
+	tmpfile.Chmod(000)
+	v := Coverage{}
+	profile := Profile{FileName: tmpfile.Name()}
+	err = v.parseProfile(&profile)
+	if err == nil || !strings.Contains(err.Error(), `permission denied`) {
+		t.Fatalf("Expected \"permission denied\" error; got: %+v", err)
 	}
 }
 

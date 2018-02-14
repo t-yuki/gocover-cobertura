@@ -6,10 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
-	"text/template"
 )
 
 const SaveTestResults = false
@@ -115,22 +113,10 @@ func TestParseProfilePermissionDenied(t *testing.T) {
 }
 
 func TestConvertSetMode(t *testing.T) {
-	tmpl, err := template.ParseFiles("testdata/testdata_set.txt")
+	pipe1rd, err := os.Open("testdata/testdata_set.txt")
 	if err != nil {
 		t.Fatal("Can't parse testdata.")
 	}
-	dirInfo := dirInfo{}
-	dirInfo.PkgPath = reflect.TypeOf(Coverage{}).PkgPath()
-
-	pipe1rd, pipe1wr := io.Pipe()
-	go func() {
-		err := tmpl.Execute(pipe1wr, dirInfo)
-		if err != nil {
-			t.Error("Can't execute template.")
-			panic("tmpl.Execute failed")
-		}
-		pipe1wr.Close()
-	}()
 
 	pipe2rd, pipe2wr := io.Pipe()
 
@@ -163,7 +149,7 @@ func TestConvertSetMode(t *testing.T) {
 	}
 
 	p := v.Packages[0]
-	if strings.TrimRight(p.Name, "/") != dirInfo.PkgPath+"/testdata" {
+	if strings.TrimRight(p.Name, "/") != "./testdata" {
 		t.Fatal(p.Name)
 	}
 	if p.Classes == nil || len(p.Classes) != 2 {
@@ -174,8 +160,8 @@ func TestConvertSetMode(t *testing.T) {
 	if c.Name != "-" {
 		t.Error()
 	}
-	if c.Filename != dirInfo.PkgPath+"/testdata/func1.go" {
-		t.Errorf("Expected %s but %s", dirInfo.PkgPath+"/testdata/func1.go", c.Filename)
+	if c.Filename != "./testdata/func1.go" {
+		t.Errorf("Expected %s but %s", "./testdata/func1.go", c.Filename)
 	}
 	if c.Methods == nil || len(c.Methods) != 1 {
 		t.Fatal()
@@ -226,8 +212,8 @@ func TestConvertSetMode(t *testing.T) {
 	if c.Name != "Type1" {
 		t.Error()
 	}
-	if c.Filename != dirInfo.PkgPath+"/testdata/func2.go" {
-		t.Errorf("Expected %s but %s", dirInfo.PkgPath+"/testdata/func2.go", c.Filename)
+	if c.Filename != "./testdata/func2.go" {
+		t.Errorf("Expected %s but %s", "./testdata/func2.go", c.Filename)
 	}
 	if c.Methods == nil || len(c.Methods) != 3 {
 		t.Fatal()

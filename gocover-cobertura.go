@@ -54,6 +54,9 @@ func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	for _, profile := range profiles {
 		cov.parseProfile(profile)
 	}
+	cov.LinesValid = cov.NumLines()
+	cov.LinesCovered = cov.NumLinesWithHits()
+	cov.LineRate = cov.HitRate()
 	return nil
 }
 
@@ -95,6 +98,7 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 		profile:  profile,
 	}
 	ast.Walk(visitor, parsed)
+	pkg.LineRate = pkg.HitRate()
 	return nil
 }
 
@@ -112,10 +116,12 @@ func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
 	case *ast.FuncDecl:
 		class := v.class(n)
 		method := v.method(n)
+		method.LineRate = method.Lines.HitRate()
 		class.Methods = append(class.Methods, method)
 		for _, line := range method.Lines {
 			class.Lines = append(class.Lines, line)
 		}
+		class.LineRate = class.Lines.HitRate()
 	}
 	return v
 }

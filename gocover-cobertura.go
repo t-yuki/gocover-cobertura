@@ -147,7 +147,7 @@ func (v *fileVisitor) method(n *ast.FuncDecl) *Method {
 			continue
 		}
 		for i := b.StartLine; i <= b.EndLine; i++ {
-			method.Lines = append(method.Lines, &Line{Number: i, Hits: int64(b.Count)})
+			method.Lines.AddOrUpdateLine(i, int64(b.Count))
 		}
 	}
 	return method

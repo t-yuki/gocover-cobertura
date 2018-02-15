@@ -180,45 +180,42 @@ func TestConvertSetMode(t *testing.T) {
 	if c.Methods == nil || len(c.Methods) != 1 {
 		t.Fatal()
 	}
-	if c.Lines == nil || len(c.Lines) != 5 { // Why 5 lines? hmm...
-		t.Fatal()
+	if c.Lines == nil || len(c.Lines) != 4 {
+		t.Errorf("Expected 4 lines but got %d", len(c.Lines))
 	}
 
 	m := c.Methods[0]
 	if m.Name != "Func1" {
 		t.Error()
 	}
-	if m.Lines == nil || len(m.Lines) != 5 {
-		t.Fatal()
+	if c.Lines == nil || len(c.Lines) != 4 {
+		t.Errorf("Expected 4 lines but got %d", len(c.Lines))
 	}
 
 	var l *Line
 	if l = m.Lines[0]; l.Number != 4 || l.Hits != 1 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l = m.Lines[1]; l.Number != 5 || l.Hits != 1 {
+	if l = m.Lines[1]; l.Number != 5 || l.Hits != 0 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l = m.Lines[2]; l.Number != 5 || l.Hits != 0 {
+	if l = m.Lines[2]; l.Number != 6 || l.Hits != 0 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l = m.Lines[3]; l.Number != 6 || l.Hits != 0 {
-		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
-	}
-	if l = m.Lines[4]; l.Number != 7 || l.Hits != 0 {
+	if l = m.Lines[3]; l.Number != 7 || l.Hits != 0 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
 
 	if l = c.Lines[0]; l.Number != 4 || l.Hits != 1 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l = c.Lines[1]; l.Number != 5 || l.Hits != 1 {
+	if l = c.Lines[1]; l.Number != 5 || l.Hits != 0 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l = c.Lines[2]; l.Number != 5 || l.Hits != 0 {
+	if l = c.Lines[2]; l.Number != 6 || l.Hits != 0 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
-	if l = c.Lines[3]; l.Number != 6 || l.Hits != 0 {
+	if l = c.Lines[3]; l.Number != 7 || l.Hits != 0 {
 		t.Errorf("unmatched line: Number:%d, Hits:%d", l.Number, l.Hits)
 	}
 

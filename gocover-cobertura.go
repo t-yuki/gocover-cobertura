@@ -9,10 +9,14 @@ import (
 	"go/token"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"golang.org/x/tools/cover"
+	"golang.org/x/tools/go/packages"
 )
 
 const coberturaDTDDecl = "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-04.dtd\">\n"
@@ -22,9 +26,20 @@ func main() {
 }
 
 func convert(in io.Reader, out io.Writer) {
-	profiles, err := ParseProfiles(in)
+	inFile, err := ioutil.TempFile("", "cover.*.out")
 	if err != nil {
-		panic("Can't parse profiles")
+		log.Panic("Can't create temporary file")
+	}
+	defer os.Remove(inFile.Name())
+
+	_, err = io.Copy(inFile, in)
+	if err != nil {
+		log.Panicf("Can't copy profiles to %s", inFile.Name())
+	}
+
+	profiles, err := cover.ParseProfiles(inFile.Name())
+	if err != nil {
+		log.Panic("Can't parse profiles")
 	}
 
 	srcDirs := build.Default.SrcDirs()
@@ -49,7 +64,7 @@ func convert(in io.Reader, out io.Writer) {
 	fmt.Fprintln(out)
 }
 
-func (cov *Coverage) parseProfiles(profiles []*Profile) error {
+func (cov *Coverage) parseProfiles(profiles []*cover.Profile) error {
 	cov.Packages = []*Package{}
 	for _, profile := range profiles {
 		cov.parseProfile(profile)
@@ -60,7 +75,7 @@ func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	return nil
 }
 
-func (cov *Coverage) parseProfile(profile *Profile) error {
+func (cov *Coverage) parseProfile(profile *cover.Profile) error {
 	fileName := profile.FileName
 	absFilePath, err := findFile(fileName)
 	if err != nil {
@@ -108,7 +123,7 @@ type fileVisitor struct {
 	fileData []byte
 	pkg      *Package
 	classes  map[string]*Class
-	profile  *Profile
+	profile  *cover.Profile
 }
 
 func (v *fileVisitor) Visit(node ast.Node) ast.Visitor {
@@ -173,4 +188,30 @@ func (v *fileVisitor) recvName(n *ast.FuncDecl) string {
 	end := v.fset.Position(recv.End())
 	name := string(v.fileData[start.Offset:end.Offset])
 	return strings.TrimSpace(strings.TrimLeft(name, "*"))
+}
+
+// findFile finds the location of the named file in GOROOT, GOPATH etc.
+func findFile(file string) (string, error) {
+	if strings.HasPrefix(file, "_") {
+		file = file[1:]
+	}
+	if _, err := os.Stat(file); err == nil {
+		return file, nil
+	}
+	dir, file := filepath.Split(file)
+	pkgs, err := packages.Load(&packages.Config{Mode: packages.LoadFiles}, dir)
+	if err != nil {
+		return "", fmt.Errorf("can't find %q: %v", file, err)
+	}
+	pkg := pkgs[0]
+	if pkg.Errors != nil {
+		return "", fmt.Errorf("can't find %q: %v", file, pkg.Errors[0])
+	}
+	for _, mod := range pkg.GoFiles {
+		_, mfile := filepath.Split(mod)
+		if mfile == file {
+			return mod, nil
+		}
+	}
+	return "", fmt.Errorf("can't find %q", file)
 }

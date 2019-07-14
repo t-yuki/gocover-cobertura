@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -11,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -18,11 +20,37 @@ import (
 const coberturaDTDDecl = "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-04.dtd\">\n"
 
 func main() {
-	convert(os.Stdin, os.Stdout)
+	var ignore Ignore
+
+	flag.BoolVar(&ignore.GeneratedFiles, "ignore-gen-files", false, "ignore generated files")
+
+	ignoreDirsRe := flag.String("ignore-dirs", "", "ignore dirs matching this regexp")
+	ignoreFilesRe := flag.String("ignore-files", "", "ignore files matching this regexp")
+
+	flag.Parse()
+
+	var err error
+	if *ignoreDirsRe != "" {
+		ignore.Dirs, err = regexp.Compile(*ignoreDirsRe)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Bad -ignore-dirs regexp: %s\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if *ignoreFilesRe != "" {
+		ignore.Files, err = regexp.Compile(*ignoreFilesRe)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Bad -ignore-files regexp: %s\n", err)
+			os.Exit(1)
+		}
+	}
+
+	convert(os.Stdin, os.Stdout, &ignore)
 }
 
-func convert(in io.Reader, out io.Writer) {
-	profiles, err := ParseProfiles(in)
+func convert(in io.Reader, out io.Writer, ignore *Ignore) {
+	profiles, err := ParseProfiles(in, ignore)
 	if err != nil {
 		panic("Can't parse profiles")
 	}
@@ -34,7 +62,7 @@ func convert(in io.Reader, out io.Writer) {
 	}
 
 	coverage := Coverage{Sources: sources, Packages: nil, Timestamp: time.Now().UnixNano() / int64(time.Millisecond)}
-	coverage.parseProfiles(profiles)
+	coverage.parseProfiles(profiles, ignore)
 
 	fmt.Fprintf(out, xml.Header)
 	fmt.Fprintf(out, coberturaDTDDecl)
@@ -49,10 +77,10 @@ func convert(in io.Reader, out io.Writer) {
 	fmt.Fprintln(out)
 }
 
-func (cov *Coverage) parseProfiles(profiles []*Profile) error {
+func (cov *Coverage) parseProfiles(profiles []*Profile, ignore *Ignore) error {
 	cov.Packages = []*Package{}
 	for _, profile := range profiles {
-		cov.parseProfile(profile)
+		cov.parseProfile(profile, ignore)
 	}
 	cov.LinesValid = cov.NumLines()
 	cov.LinesCovered = cov.NumLinesWithHits()
@@ -60,7 +88,7 @@ func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	return nil
 }
 
-func (cov *Coverage) parseProfile(profile *Profile) error {
+func (cov *Coverage) parseProfile(profile *Profile, ignore *Ignore) error {
 	fileName := profile.FileName
 	absFilePath, err := findFile(fileName)
 	if err != nil {
@@ -74,6 +102,10 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 	data, err := ioutil.ReadFile(absFilePath)
 	if err != nil {
 		return err
+	}
+
+	if ignore.Match(fileName, data) {
+		return nil
 	}
 
 	pkgPath, _ := filepath.Split(fileName)

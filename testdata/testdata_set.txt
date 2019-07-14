@@ -5,3 +5,5 @@ mode: set
 ./testdata/func2.go:8.16,10.3 1 1
 ./testdata/func2.go:13.35,14.2 0 0
 ./testdata/func2.go:16.35,17.2 0 0
+./testdata/func3.go:6.35,17.2 0 0
+./testdata/func4.go:6.35,17.2 0 0

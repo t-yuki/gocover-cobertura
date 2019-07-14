@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -44,7 +45,7 @@ func TestConvertParseProfilesError(t *testing.T) {
 
 	pipe2rd, pipe2wr := io.Pipe()
 	defer func() { pipe2rd.Close(); pipe2wr.Close() }()
-	convert(strings.NewReader("invalid data"), pipe2wr)
+	convert(strings.NewReader("invalid data"), pipe2wr, &Ignore{})
 }
 
 func TestConvertOutputError(t *testing.T) {
@@ -58,14 +59,14 @@ func TestConvertOutputError(t *testing.T) {
 	pipe2rd, pipe2wr := io.Pipe()
 	pipe2wr.Close()
 	defer func() { pipe2rd.Close() }()
-	convert(strings.NewReader("mode: set"), pipe2wr)
+	convert(strings.NewReader("mode: set"), pipe2wr, &Ignore{})
 }
 
 func TestConvertEmpty(t *testing.T) {
 	data := `mode: set`
 
 	pipe2rd, pipe2wr := io.Pipe()
-	go convert(strings.NewReader(data), pipe2wr)
+	go convert(strings.NewReader(data), pipe2wr, &Ignore{})
 
 	v := Coverage{}
 	dec := xml.NewDecoder(pipe2rd)
@@ -85,7 +86,7 @@ func TestConvertEmpty(t *testing.T) {
 func TestParseProfileDoesntExist(t *testing.T) {
 	v := Coverage{}
 	profile := Profile{FileName: "does-not-exist"}
-	err := v.parseProfile(&profile)
+	err := v.parseProfile(&profile, &Ignore{})
 	if err == nil || !strings.Contains(err.Error(), `can't find "does-not-exist"`) {
 		t.Fatalf("Expected \"can't find\" error; got: %+v", err)
 	}
@@ -94,7 +95,7 @@ func TestParseProfileDoesntExist(t *testing.T) {
 func TestParseProfileNotReadable(t *testing.T) {
 	v := Coverage{}
 	profile := Profile{FileName: os.DevNull}
-	err := v.parseProfile(&profile)
+	err := v.parseProfile(&profile, &Ignore{})
 	if err == nil || !strings.Contains(err.Error(), `expected 'package', found 'EOF'`) {
 		t.Fatalf("Expected \"expected 'package', found 'EOF'\" error; got: %+v", err)
 	}
@@ -106,7 +107,7 @@ func TestParseProfilePermissionDenied(t *testing.T) {
 	tmpfile.Chmod(000)
 	v := Coverage{}
 	profile := Profile{FileName: tmpfile.Name()}
-	err = v.parseProfile(&profile)
+	err = v.parseProfile(&profile, &Ignore{})
 	if err == nil || !strings.Contains(err.Error(), `permission denied`) {
 		t.Fatalf("Expected \"permission denied\" error; got: %+v", err)
 	}
@@ -130,7 +131,10 @@ func TestConvertSetMode(t *testing.T) {
 		convwr = io.MultiWriter(convwr, testwr)
 	}
 
-	go convert(pipe1rd, convwr)
+	go convert(pipe1rd, convwr, &Ignore{
+		GeneratedFiles: true,
+		Files:          regexp.MustCompile(`/func[45]\.go$`),
+	})
 
 	v := Coverage{}
 	dec := xml.NewDecoder(pipe2rd)

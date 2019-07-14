@@ -42,7 +42,7 @@ func (p byFileName) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // ParseProfiles parses profile data from the given Reader and returns a
 // Profile for each file.
-func ParseProfiles(in io.Reader) ([]*Profile, error) {
+func ParseProfiles(in io.Reader, ignore *Ignore) ([]*Profile, error) {
 	files := make(map[string]*Profile)
 	// First line is "mode: foo", where foo is "set", "count", or "atomic".
 	// Rest of file is in the format
@@ -65,6 +65,9 @@ func ParseProfiles(in io.Reader) ([]*Profile, error) {
 			return nil, fmt.Errorf("line %q doesn't match expected format: %v", m, lineRe)
 		}
 		fn := m[1]
+		if ignore.Match(fn, nil) {
+			continue
+		}
 		p := files[fn]
 		if p == nil {
 			p = &Profile{

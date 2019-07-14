@@ -24,6 +24,41 @@ Usage
     $ go test -coverprofile=coverage.txt -covermode count github.com/gorilla/mux
     $ gocover-cobertura < coverage.txt > coverage.xml
 
+Some flags can be passed (each flag should only be used once):
+
+- `-ignore-dirs PATTERN`
+
+  ignore directories matching `PATTERN` regular expression. Full
+  directory names are matched, as
+  `github.com/t-yuki/gocover-cobertura` (and so `github.com/t-yuki`
+  and `github.com`), examples of use:
+  ```
+  # A specific directory
+  -ignore-dirs '^github\.com/t-yuki/gocover-cobertura/testdata$'
+  # All directories autogen and any of their subdirs
+  -ignore-dirs '/autogen$'
+  ```
+
+- `-ignore-files PATTERN`
+
+  ignore files matching `PATTERN` regular expression. Full file names
+  are matched, as `github.com/t-yuki/gocover-cobertura/profile.go`,
+  examples of use:
+  ```
+  # A specific file
+  -ignore-files '^github\.com/t-yuki/gocover-cobertura/profile\.go$'
+  # All files ending with _gen.go
+  -ignore-files '_gen\.go$'
+  # All files in a directory autogen (or any of its subdirs)
+  -ignore-files '/autogen/'
+  ```
+
+- `-ignore-gen-files`
+
+  ignore generated files. Typically files containing a comment
+  indicating that the file has been automatically generated. See
+  `genCodeRe` regexp in [ignore.go](ignore.go).
+
 Authors
 -------
 

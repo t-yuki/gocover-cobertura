@@ -1,4 +1,4 @@
-// Imported from https://github.com/golang/go/blob/96745b980cfde139e8611772e2bc0c59a8e6cdf7/src/cmd/cover/func.go
+// Imported from https://github.com/golang/go/blob/96745b980cfde139e8611772e2bc0c59a8e6cdf7/src/cmd/cover/profile.go
 
 // Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style

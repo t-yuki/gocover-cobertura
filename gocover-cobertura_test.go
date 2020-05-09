@@ -85,16 +85,18 @@ func TestConvertEmpty(t *testing.T) {
 func TestParseProfileDoesntExist(t *testing.T) {
 	v := Coverage{}
 	profile := Profile{FileName: "does-not-exist"}
-	err := v.parseProfile(&profile)
-	if err == nil || !strings.Contains(err.Error(), `can't find "does-not-exist"`) {
-		t.Fatalf("Expected \"can't find\" error; got: %+v", err)
+	var dirs map[string]*Pkg
+	err := v.parseProfile(dirs, &profile)
+	if err == nil || !strings.Contains(err.Error(), `did not find package for does-not-exist in go list output`) {
+		t.Fatalf("Expected \"did not find package for does-not-exist in go list output\" error; got: %+v", err)
 	}
 }
 
 func TestParseProfileNotReadable(t *testing.T) {
 	v := Coverage{}
 	profile := Profile{FileName: os.DevNull}
-	err := v.parseProfile(&profile)
+	var dirs map[string]*Pkg
+	err := v.parseProfile(dirs, &profile)
 	if err == nil || !strings.Contains(err.Error(), `expected 'package', found 'EOF'`) {
 		t.Fatalf("Expected \"expected 'package', found 'EOF'\" error; got: %+v", err)
 	}
@@ -106,7 +108,8 @@ func TestParseProfilePermissionDenied(t *testing.T) {
 	tmpfile.Chmod(000)
 	v := Coverage{}
 	profile := Profile{FileName: tmpfile.Name()}
-	err = v.parseProfile(&profile)
+	var dirs map[string]*Pkg
+	err = v.parseProfile(dirs, &profile)
 	if err == nil || !strings.Contains(err.Error(), `permission denied`) {
 		t.Fatalf("Expected \"permission denied\" error; got: %+v", err)
 	}

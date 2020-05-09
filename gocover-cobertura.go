@@ -50,9 +50,14 @@ func convert(in io.Reader, out io.Writer) {
 }
 
 func (cov *Coverage) parseProfiles(profiles []*Profile) error {
+	dirs, err := findPkgs(profiles)
+	if err != nil {
+		return err
+	}
+
 	cov.Packages = []*Package{}
 	for _, profile := range profiles {
-		cov.parseProfile(profile)
+		cov.parseProfile(dirs, profile)
 	}
 	cov.LinesValid = cov.NumLines()
 	cov.LinesCovered = cov.NumLinesWithHits()
@@ -60,9 +65,9 @@ func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	return nil
 }
 
-func (cov *Coverage) parseProfile(profile *Profile) error {
+func (cov *Coverage) parseProfile(dirs map[string]*Pkg, profile *Profile) error {
 	fileName := profile.FileName
-	absFilePath, err := findFile(fileName)
+	absFilePath, err := findFile(dirs, fileName)
 	if err != nil {
 		return err
 	}

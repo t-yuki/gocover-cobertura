@@ -62,7 +62,7 @@ func ParseProfiles(in io.Reader) ([]*Profile, error) {
 		}
 		m := lineRe.FindStringSubmatch(line)
 		if m == nil {
-			return nil, fmt.Errorf("line %q doesn't match expected format: %v", m, lineRe)
+			continue
 		}
 		fn := m[1]
 		p := files[fn]

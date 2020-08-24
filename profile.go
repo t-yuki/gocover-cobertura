@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"go/build"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -149,54 +148,6 @@ type Boundary struct {
 	Start  bool    // Is this the start of a block?
 	Count  int     // Event count from the cover profile.
 	Norm   float64 // Count normalized to [0..1].
-}
-
-// Boundaries returns a Profile as a set of Boundary objects within the provided src.
-func (p *Profile) Boundaries(src []byte) (boundaries []Boundary) {
-	// Find maximum count.
-	max := 0
-	for _, b := range p.Blocks {
-		if b.Count > max {
-			max = b.Count
-		}
-	}
-	// Divisor for normalization.
-	divisor := math.Log(float64(max))
-
-	// boundary returns a Boundary, populating the Norm field with a normalized Count.
-	boundary := func(offset int, start bool, count int) Boundary {
-		b := Boundary{Offset: offset, Start: start, Count: count}
-		if !start || count == 0 {
-			return b
-		}
-		if max <= 1 {
-			b.Norm = 0.8 // Profile is in"set" mode; we want a heat map. Use cov8 in the CSS.
-		} else if count > 0 {
-			b.Norm = math.Log(float64(count)) / divisor
-		}
-		return b
-	}
-
-	line, col := 1, 2 // TODO: Why is this 2?
-	for si, bi := 0, 0; si < len(src) && bi < len(p.Blocks); {
-		b := p.Blocks[bi]
-		if b.StartLine == line && b.StartCol == col {
-			boundaries = append(boundaries, boundary(si, true, b.Count))
-		}
-		if b.EndLine == line && b.EndCol == col {
-			boundaries = append(boundaries, boundary(si, false, 0))
-			bi++
-			continue // Don't advance through src; maybe the next block starts here.
-		}
-		if src[si] == '\n' {
-			line++
-			col = 0
-		}
-		col++
-		si++
-	}
-	sort.Sort(boundariesByPos(boundaries))
-	return
 }
 
 type boundariesByPos []Boundary

@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,7 +53,9 @@ func convert(in io.Reader, out io.Writer) {
 func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	cov.Packages = []*Package{}
 	for _, profile := range profiles {
-		cov.parseProfile(profile)
+		if err := cov.parseProfile(profile); err != nil {
+			log.Printf("Cannot parse profile %s because of error: %s", profile.FileName, err.Error())
+		}
 	}
 	cov.LinesValid = cov.NumLines()
 	cov.LinesCovered = cov.NumLinesWithHits()

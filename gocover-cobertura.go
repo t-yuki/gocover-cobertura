@@ -23,10 +23,11 @@ var withPath string
 func init() {
 	flag.StringVar(&replacePath, "replace", "", "Replace path")
 	flag.StringVar(&withPath, "with", "", "With path")
-	flag.Parse()
+
 }
 
 func main() {
+	flag.Parse()
 	convert(os.Stdin, os.Stdout)
 }
 

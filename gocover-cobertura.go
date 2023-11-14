@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/build"
 	"go/parser"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +17,17 @@ import (
 
 const coberturaDTDDecl = "<!DOCTYPE coverage SYSTEM \"http://cobertura.sourceforge.net/xml/coverage-04.dtd\">\n"
 
+var replacePath string
+var withPath string
+
+func init() {
+	flag.StringVar(&replacePath, "replace", "", "Replace path")
+	flag.StringVar(&withPath, "with", "", "With path")
+
+}
+
 func main() {
+	flag.Parse()
 	convert(os.Stdin, os.Stdout)
 }
 
@@ -28,10 +38,11 @@ func convert(in io.Reader, out io.Writer) {
 	}
 
 	srcDirs := build.Default.SrcDirs()
-	sources := make([]*Source, len(srcDirs))
+	sources := make([]*Source, len(srcDirs)+1)
 	for i, dir := range srcDirs {
 		sources[i] = &Source{dir}
 	}
+	sources[len(srcDirs)] = &Source{"/"}
 
 	coverage := Coverage{Sources: sources, Packages: nil, Timestamp: time.Now().UnixNano() / int64(time.Millisecond)}
 	coverage.parseProfiles(profiles)
@@ -60,18 +71,23 @@ func (cov *Coverage) parseProfiles(profiles []*Profile) error {
 	return nil
 }
 
-func (cov *Coverage) parseProfile(profile *Profile) error {
+func (cov *Coverage) parseProfile(profile *Profile) (err error) {
 	fileName := profile.FileName
-	absFilePath, err := findFile(fileName)
-	if err != nil {
-		return err
+	var absFilePath string
+	if replacePath != "" {
+		absFilePath = strings.ReplaceAll(fileName, replacePath, withPath)
+	} else {
+		absFilePath, err = findFile(fileName)
+		if err != nil {
+			return err
+		}
 	}
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, absFilePath, nil, 0)
 	if err != nil {
 		return err
 	}
-	data, err := ioutil.ReadFile(absFilePath)
+	data, err := os.ReadFile(absFilePath)
 	if err != nil {
 		return err
 	}
@@ -91,7 +107,7 @@ func (cov *Coverage) parseProfile(profile *Profile) error {
 	}
 	visitor := &fileVisitor{
 		fset:     fset,
-		fileName: fileName,
+		fileName: absFilePath,
 		fileData: data,
 		classes:  make(map[string]*Class),
 		pkg:      pkg,
